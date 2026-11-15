@@ -1,1 +1,69 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111">
+  <title>Arz Resolver</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:#101010;color:#f5f5f5;font-family:Arial,sans-serif;display:grid;place-items:center;padding:22px}
+    main{width:min(100%,560px);border:1px solid #454545;background:#181818;padding:24px;border-radius:16px}
+    h1{margin:0 0 8px;font-size:30px}p{color:#bdbdbd;line-height:1.5}
+    textarea{width:100%;min-height:105px;resize:vertical;background:#0d0d0d;color:white;border:1px solid #555;border-radius:10px;padding:14px;font:14px monospace}
+    button{width:100%;margin-top:12px;padding:14px;border:0;border-radius:10px;background:#e8e8e8;color:#111;font-weight:700;font-size:15px}
+    button:disabled{opacity:.55}#result{display:none;margin-top:18px;padding:15px;background:#0d0d0d;border:1px solid #444;border-radius:10px;overflow-wrap:anywhere}
+    .muted{font-size:12px;color:#999}.link{color:#9bc7ff}
+  </style>
+</head>
+<body>
+<main>
+  <h1>Arz Resolver</h1>
+  <p>Periksa halaman Sfile dan Sub2Unlock serta redirect HTTP biasa.</p>
+  <textarea id="url" placeholder="Tempel URL Sfile atau Sub2Unlock di sini"></textarea>
+  <button id="resolve">Periksa URL</button>
+  <section id="result" aria-live="polite"></section>
+  <p class="muted">Catatan: verifikasi, iklan, CAPTCHA, login, dan persyaratan unlock tetap harus diselesaikan di situs resmi.</p>
+</main>
+<script>
+const button=document.getElementById("resolve");
+const input=document.getElementById("url");
+const result=document.getElementById("result");
+button.addEventListener("click",async()=>{
+  const url=input.value.trim();
+  result.style.display="block";
+  result.textContent="Memeriksa URL...";
+  button.disabled=true;
+  try{
+    const response=await fetch("/api/resolve",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({url})});
+    const data=await response.json();
+    if(data.status!=="success") throw new Error(data.message||"Gagal memeriksa URL.");
+    const r=data.result;
+    result.replaceChildren();
+    const heading=document.createElement("strong");
+    heading.textContent=r.provider||"Hasil pemeriksaan";
+    result.append(heading);
+    const details=document.createElement("p");
+    details.textContent=[
+      r.title ? "Judul: "+r.title : "",
+      typeof r.status==="number" ? "HTTP status: "+r.status : "",
+      r.accessStatus||"",
+      r.note||""
+    ].filter(Boolean).join("\n\n");
+    details.style.whiteSpace="pre-line";
+    result.append(details);
+    if(r.externalRedirect){
+      const a=document.createElement("a");
+      a.href=r.externalRedirect;a.textContent="Buka tujuan redirect";a.target="_blank";a.rel="noopener noreferrer";a.className="link";
+      result.append(a);
+    }else if(r.pageUrl){
+      const a=document.createElement("a");
+      a.href=r.pageUrl;a.textContent="Buka halaman sumber";a.target="_blank";a.rel="noopener noreferrer";a.className="link";
+      result.append(a);
+    }
+  }catch(e){result.textContent=e.message}
+  finally{button.disabled=false}
+});
+</script>
+</body>
+</html>
 
