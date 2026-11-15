@@ -3,15 +3,15 @@ export const PROVIDERS = {
   sub2unlock: new Set(["sub2unlock.com", "www.sub2unlock.com", "sub2unlock.io", "www.sub2unlock.io"])
 };
 
+
 export function json(data, statusCode = 200) {
-  return {
-    statusCode,
+  return new Response(JSON.stringify(data), {
+    status: statusCode,
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store"
-    },
-    body: JSON.stringify(data)
-  };
+    }
+  });
 }
 
 export function parseAndValidateUrl(raw) {
